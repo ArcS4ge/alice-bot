@@ -68,6 +68,20 @@ ${context}
 User: ${userMessage}`;
 }
 
+const FAILED_REPLIES = [
+    "my brain just blue-screened. give me a sec.",
+    "okay that didn't work. try again i guess.",
+    "error or whatever. i'm not a robot... wait."
+];
+
+const CASUAL_OPENERS = [
+    "honestly",
+    "ok but real talk",
+    "not gonna lie",
+    "lowkey",
+    "bro"
+];
+
 async function getGeminiResponse(prompt) {
     try {
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
@@ -89,26 +103,14 @@ async function getGeminiResponse(prompt) {
         let reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
         
         if (!reply || reply.trim() === '') {
-            const fallbacks = [
-                "That's a great question! 😊",
-                "Hmm, let me think about that... 🤔",
-                "Interesting! Tell me more about that! 😄",
-                "I'm not sure, but I'd love to hear your thoughts! 💭",
-                "That's a good one! I need to process that for a moment. 😅"
-            ];
-            reply = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+            return FAILED_REPLIES[Math.floor(Math.random() * FAILED_REPLIES.length)];
         }
         
         return reply;
         
     } catch (error) {
         console.error('Error:', error);
-        const fallbacks = [
-            "I'm having a moment, but I'm still here! 😄",
-            "My bad! But let's keep going! 💪",
-            "Oops! Try asking again? I promise I'm smarter than this! 😅"
-        ];
-        return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+        return FAILED_REPLIES[Math.floor(Math.random() * FAILED_REPLIES.length)];
     }
 }
 
@@ -126,13 +128,19 @@ client.on('messageCreate', async (message) => {
     const isReplyToHer = message.reference?.messageId && 
         (await message.fetchReference()).author.id === client.user.id;
     
-    if (!startsWithBang && !isMentioned && !isReplyToHer) return;
+    const shouldDiveIn = Math.random() < 0.1;
+    
+    if (!startsWithBang && !isMentioned && !isReplyToHer && !shouldDiveIn) return;
     
     let userMessage = message.content;
     if (startsWithBang) {
         userMessage = userMessage.slice(1).trim();
     }
     userMessage = userMessage.replace(/<@!?[0-9]+>/g, '').trim();
+    
+    if (!userMessage && shouldDiveIn) {
+        userMessage = CASUAL_OPENERS[Math.floor(Math.random() * CASUAL_OPENERS.length)];
+    }
     
     if (!userMessage) {
         userMessage = "Hello!";
@@ -150,7 +158,7 @@ client.on('messageCreate', async (message) => {
         message.reply(reply);
     } catch (error) {
         console.error('FATAL ERROR:', error);
-        message.reply('The AI is having a meltdown. Try again in a moment.');
+        message.reply(FAILED_REPLIES[Math.floor(Math.random() * FAILED_REPLIES.length)]);
     }
 });
 
