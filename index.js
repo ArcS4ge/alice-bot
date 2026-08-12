@@ -48,8 +48,15 @@ client.on('messageCreate', async (message) => {
     
     try {
         await message.channel.sendTyping();
-        const reply = await getGeminiResponse(userMessage);
-        message.reply(reply);
+        let reply = await getGeminiResponse(userMessage);
+let attempts = 0;
+while ((reply === 'I had a brain fart. Try again!' || reply.startsWith('Error:')) && attempts < 3) {
+    console.log(`🔄 Retry ${attempts + 1}...`);
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    reply = await getGeminiResponse(userMessage);
+    attempts++;
+}
+message.reply(reply);
     } catch (error) {
         console.error('FATAL ERROR:', error);
         message.reply('The AI is having a meltdown. Try again in a moment.');
