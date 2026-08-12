@@ -8,8 +8,8 @@ const client = new Client({
     ] 
 });
 
-const TOKEN = 'MTUzNjgxOTM2MzgxMjk5OTM0OQ.GsqBwT.1opI9TVnj-9F1bWMlhfHxsy90IrRSGtU6pLwHA';
-const GEMINI_API_KEY = 'AQ.Ab8RN6Lbmwl91FCl2qltkrL2DULzgnEw6Kg58TOzjDkdmezK9A';
+const TOKEN = process.env.TOKEN;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 async function getGeminiResponse(prompt) {
     try {
