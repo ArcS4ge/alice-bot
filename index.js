@@ -29,10 +29,31 @@ User: ${prompt}` }]
         });
         
         const data = await response.json();
-        return data.candidates?.[0]?.content?.parts?.[0]?.text || 'I had a brain fart. Try again!';
+        console.log('Gemini Response:', JSON.stringify(data, null, 2));
+        
+        let reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        
+        if (!reply || reply.trim() === '') {
+            const fallbacks = [
+                "That's a great question! 😊",
+                "Hmm, let me think about that... 🤔",
+                "Interesting! Tell me more about that! 😄",
+                "I'm not sure, but I'd love to hear your thoughts! 💭",
+                "That's a good one! I need to process that for a moment. 😅"
+            ];
+            reply = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+        }
+        
+        return reply;
+        
     } catch (error) {
         console.error('Error:', error);
-        return 'Error: ' + error.message;
+        const fallbacks = [
+            "I'm having a moment, but I'm still here! 😄",
+            "My bad! But let's keep going! 💪",
+            "Oops! Try asking again? I promise I'm smarter than this! 😅"
+        ];
+        return fallbacks[Math.floor(Math.random() * fallbacks.length)];
     }
 }
 
@@ -48,20 +69,14 @@ client.on('messageCreate', async (message) => {
     
     try {
         await message.channel.sendTyping();
-        let reply = await getGeminiResponse(userMessage);
-let attempts = 0;
-while ((reply === 'I had a brain fart. Try again!' || reply.startsWith('Error:')) && attempts < 3) {
-    console.log(`🔄 Retry ${attempts + 1}...`);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    reply = await getGeminiResponse(userMessage);
-    attempts++;
-}
-message.reply(reply);
+        const reply = await getGeminiResponse(userMessage);
+        message.reply(reply);
     } catch (error) {
         console.error('FATAL ERROR:', error);
         message.reply('The AI is having a meltdown. Try again in a moment.');
     }
 });
+
 const http = require('http');
 const server = http.createServer((req, res) => {
     res.writeHead(200);
