@@ -55,5 +55,11 @@ client.on('messageCreate', async (message) => {
         message.reply('The AI is having a meltdown. Try again in a moment.');
     }
 });
+const http = require('http');
+const server = http.createServer((req, res) => {
+    res.writeHead(200);
+    res.end('Alice is alive!');
+});
+server.listen(process.env.PORT || 10000);
 
 client.login(TOKEN);
