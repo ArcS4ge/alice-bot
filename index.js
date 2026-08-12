@@ -12,6 +12,7 @@ const client = new Client({
 
 const TOKEN = process.env.TOKEN;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
 const MEMORY_FILE = path.join(__dirname, 'memory.json');
 
@@ -82,6 +83,34 @@ const CASUAL_OPENERS = [
     "bro"
 ];
 
+async function getGroqResponse(prompt) {
+    try {
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${GROQ_API_KEY}`
+            },
+            body: JSON.stringify({
+                model: 'llama-3.1-8b-instant',
+                messages: [
+                    { role: 'system', content: prompt },
+                    { role: 'user', content: prompt }
+                ],
+                max_tokens: 300
+            })
+        });
+        
+        const data = await response.json();
+        console.log('Groq Response:', JSON.stringify(data, null, 2));
+        
+        return data?.choices?.[0]?.message?.content || FAILED_REPLIES[Math.floor(Math.random() * FAILED_REPLIES.length)];
+    } catch (error) {
+        console.error('Groq Error:', error);
+        return FAILED_REPLIES[Math.floor(Math.random() * FAILED_REPLIES.length)];
+    }
+}
+
 async function getGeminiResponse(prompt) {
     try {
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
@@ -100,24 +129,29 @@ async function getGeminiResponse(prompt) {
         const data = await response.json();
         console.log('Gemini Response:', JSON.stringify(data, null, 2));
         
+        if (data?.error?.code === 429) {
+            console.log('Gemini rate limit hit, falling back to Groq...');
+            return await getGroqResponse(prompt);
+        }
+        
         let reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
         
         if (!reply || reply.trim() === '') {
-            return FAILED_REPLIES[Math.floor(Math.random() * FAILED_REPLIES.length)];
+            return await getGroqResponse(prompt);
         }
         
         return reply;
         
     } catch (error) {
         console.error('Error:', error);
-        return FAILED_REPLIES[Math.floor(Math.random() * FAILED_REPLIES.length)];
+        return await getGroqResponse(prompt);
     }
 }
 
 let memory = loadMemory();
 
 client.on('ready', () => {
-    console.log(`✅ ${client.user.tag} is online with Gemini + Memory!`);
+    console.log(`✅ ${client.user.tag} is online with Gemini + Groq fallback!`);
 });
 
 client.on('messageCreate', async (message) => {
