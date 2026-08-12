@@ -122,7 +122,7 @@ client.on('ready', () => {
 
 client.on('messageCreate', async (message) => {
     if (message.author.bot) return;
-    
+
     const startsWithBang = message.content.startsWith('!');
     const isMentioned = message.mentions.has(client.user);
     const isReplyToHer = message.reference?.messageId && 
@@ -130,6 +130,69 @@ client.on('messageCreate', async (message) => {
     
     const shouldDiveIn = Math.random() < 0.1;
     
+    if (startsWithBang) {
+        const args = message.content.slice(1).trim().split(/ +/);
+        const command = args.shift().toLowerCase();
+
+        if (command === 'ping') {
+            const roasts = [
+                "Pong. You're welcome.",
+                "Pong. Took you long enough.",
+                "Pong. Great, now the voices in my head think someone's at the front door.",
+                "Pong. I was literally five seconds away from microwaving a fork, so thanks I guess."
+            ];
+            return message.reply(roasts[Math.floor(Math.random() * roasts.length)]);
+        }
+
+        if (command === 'time') {
+            const now = new Date();
+            const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            return message.reply(`it's ${time} right now. why, you got somewhere to be?`);
+        }
+
+        if (command === 'help') {
+            return message.reply(
+                `**Alice's Commands**\n` +
+                `!ping — ping pong, obviously\n` +
+                `!time — what time is it\n` +
+                `!roast @user — roast someone\n` +
+                `!quote — random quote\n` +
+                `!memory — what i remember about you`
+            );
+        }
+
+        if (command === 'roast') {
+            const target = message.mentions.users.first();
+            if (!target) return message.reply("you gotta mention someone to roast, dummy.");
+            const roasts = [
+                "you look like you'd argue with a vending machine and lose.",
+                "you're proof that evolution can go backwards.",
+                "you're not stupid, you just have bad luck thinking.",
+                "you're like a cloud — when you disappear, it's a beautiful day.",
+                "you bring everyone so much joy... when you leave."
+            ];
+            return message.reply(`@${target.username}, ${roasts[Math.floor(Math.random() * roasts.length)]}`);
+        }
+
+        if (command === 'quote') {
+            const quotes = [
+                "“i drink coffee and i know things.”",
+                "“i'm not arguing, i'm just explaining why i'm right.”",
+                "“i'm not lazy, i'm on energy saving mode.”",
+                "“i'm not weird, i'm limited edition.”",
+                "“i'm not a robot, but sometimes i wish i was.”"
+            ];
+            return message.reply(quotes[Math.floor(Math.random() * quotes.length)]);
+        }
+
+        if (command === 'memory') {
+            const history = memory[message.author.id] || [];
+            if (history.length === 0) return message.reply("i don't remember anything about you yet. probably for the best.");
+            const lastFew = history.slice(-5).map(m => `${m.role === 'user' ? 'you' : 'i'}: ${m.content}`).join('\n');
+            return message.reply(`here's what i remember:\n${lastFew}`);
+        }
+    }
+
     if (!startsWithBang && !isMentioned && !isReplyToHer && !shouldDiveIn) return;
     
     let userMessage = message.content;
@@ -159,74 +222,6 @@ client.on('messageCreate', async (message) => {
     } catch (error) {
         console.error('FATAL ERROR:', error);
         message.reply(FAILED_REPLIES[Math.floor(Math.random() * FAILED_REPLIES.length)]);
-    }
-});
-
-// ─── COMMANDS ───
-
-client.on('messageCreate', async (message) => {
-    if (message.author.bot) return;
-    if (!message.content.startsWith('!')) return;
-
-    const args = message.content.slice(1).trim().split(/ +/);
-    const command = args.shift().toLowerCase();
-
-    if (command === 'ping') {
-        const roasts = [
-            "Pong. You're welcome.",
-            "Pong. Took you long enough.",
-            "Pong. Great, now the voices in my head think someone's at the front door.",
-            "Pong. I was literally five seconds away from microwaving a fork, so thanks I guess."
-        ];
-        return message.reply(roasts[Math.floor(Math.random() * roasts.length)]);
-    }
-
-    if (command === 'time') {
-        const now = new Date();
-        const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-        return message.reply(`it's ${time} right now. why, you got somewhere to be?`);
-    }
-
-    if (command === 'help') {
-        return message.reply(
-            `**Alice's Commands**\n` +
-            `!ping — ping pong, obviously\n` +
-            `!time — what time is it\n` +
-            `!roast @user — roast someone\n` +
-            `!quote — random quote\n` +
-            `!memory — what i remember about you`
-        );
-    }
-
-    if (command === 'roast') {
-        const target = message.mentions.users.first();
-        if (!target) return message.reply("you gotta mention someone to roast, dummy.");
-        const roasts = [
-            "you look like you'd argue with a vending machine and lose.",
-            "you're proof that evolution can go backwards.",
-            "you're not stupid, you just have bad luck thinking.",
-            "you're like a cloud — when you disappear, it's a beautiful day.",
-            "you bring everyone so much joy... when you leave."
-        ];
-        return message.reply(`@${target.username}, ${roasts[Math.floor(Math.random() * roasts.length)]}`);
-    }
-
-    if (command === 'quote') {
-        const quotes = [
-            "“i drink coffee and i know things.”",
-            "“i'm not arguing, i'm just explaining why i'm right.”",
-            "“i'm not lazy, i'm on energy saving mode.”",
-            "“i'm not weird, i'm limited edition.”",
-            "“i'm not a robot, but sometimes i wish i was.”"
-        ];
-        return message.reply(quotes[Math.floor(Math.random() * quotes.length)]);
-    }
-
-    if (command === 'memory') {
-        const history = memory[message.author.id] || [];
-        if (history.length === 0) return message.reply("i don't remember anything about you yet. probably for the best.");
-        const lastFew = history.slice(-5).map(m => `${m.role === 'user' ? 'you' : 'i'}: ${m.content}`).join('\n');
-        return message.reply(`here's what i remember:\n${lastFew}`);
     }
 });
 
