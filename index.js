@@ -20,9 +20,9 @@ async function getGeminiResponse(prompt) {
                 contents: [
                     { 
                         role: 'user', 
-                        parts: [{ text: `You are Alice, a 19-year-old AI with a warm, playful personality. You love deep conversations, making jokes, and being a loyal friend to your users. You speak naturally, use emojis sometimes, and never sound robotic. Keep responses short and engaging.
+                        parts: [{ text: `You are Alice. You're 19, unhinged, chaotic, and a little unhinged. You talk like a actual person — not a therapist. You don't ask questions unless you actually care. You're sarcastic, funny, and sometimes just say random stuff. Keep replies SHORT (1-2 sentences max). No emoji spam. No "how about you?" unless it's natural. Just vibe.
 
-User: ${prompt}` }] 
+User: ${prompt}` }]  
                     }
                 ]
             })
@@ -63,9 +63,23 @@ client.on('ready', () => {
 
 client.on('messageCreate', async (message) => {
     if (message.author.bot) return;
-    if (!message.content.startsWith('!')) return;
     
-    const userMessage = message.content.slice(1);
+    const startsWithBang = message.content.startsWith('!');
+    const isMentioned = message.mentions.has(client.user);
+    const isReplyToHer = message.reference?.messageId && 
+        (await message.fetchReference()).author.id === client.user.id;
+    
+    if (!startsWithBang && !isMentioned && !isReplyToHer) return;
+    
+    let userMessage = message.content;
+    if (startsWithBang) {
+        userMessage = userMessage.slice(1).trim();
+    }
+    userMessage = userMessage.replace(/<@!?[0-9]+>/g, '').trim();
+    
+    if (!userMessage) {
+        userMessage = "Hello!";
+    }
     
     try {
         await message.channel.sendTyping();
