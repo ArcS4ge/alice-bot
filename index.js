@@ -148,6 +148,31 @@ async function getGeminiResponse(prompt) {
     }
 }
 
+function shouldReplyTo(message, userMessage, memory) {
+    const history = memory[message.author.id] || [];
+    const lastMessage = history.length > 0 ? history[history.length - 1] : null;
+    
+    if (lastMessage && lastMessage.content === userMessage) {
+        console.log(`😴 Ignoring duplicate message: "${userMessage}"`);
+        return false;
+    }
+    
+    const lowEffortMessages = ['ok', 'lol', 'k', 'bye', 'goodbye', 'nice', 'cool', 'yeah', 'no', 'yes'];
+    if (lowEffortMessages.includes(userMessage.toLowerCase().trim())) {
+        const recentHistory = history.slice(-3);
+        const recentLowEffort = recentHistory.filter(m => 
+            lowEffortMessages.includes(m.content.toLowerCase().trim())
+        ).length;
+        
+        if (recentLowEffort >= 2) {
+            console.log(`😴 Ignoring low-effort message: "${userMessage}"`);
+            return false;
+        }
+    }
+    
+    return true;
+}
+
 let memory = loadMemory();
 
 client.on('ready', () => {
@@ -242,6 +267,8 @@ client.on('messageCreate', async (message) => {
     if (!userMessage) {
         userMessage = "Hello!";
     }
+    
+    if (!shouldReplyTo(message, userMessage, memory)) return;
     
     try {
         await message.channel.sendTyping();
