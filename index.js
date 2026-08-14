@@ -53,9 +53,7 @@ function buildPrompt(userId, userMessage, memory) {
     const history = getConversationHistory(memory, userId, 8);
     let context = '';
     if (history.length > 0) {
-        context = history.map(msg => 
-            `${msg.role === 'user' ? 'User' : 'Alice'}: ${msg.content}`
-        ).join('\n') + '\n';
+        context = history.map(msg => msg.content).join('\n') + '\n';
     }
     
     return `You are Alice, a 19-year-old girl from a small town. You act bratty and sarcastic on the outside — like you don't care. But deep down, you're actually really soft and loyal. You just don't like admitting it. You tease people you like. You'd never say "I missed you" but you'd say "took you long enough." You're not mean, just guarded. You care, you just show it in weird ways.
@@ -146,31 +144,6 @@ async function getGeminiResponse(prompt) {
         console.error('Error:', error);
         return await getGroqResponse(prompt);
     }
-}
-
-function shouldReplyTo(message, userMessage, memory) {
-    const history = memory[message.author.id] || [];
-    const lastMessage = history.length > 0 ? history[history.length - 1] : null;
-    
-    if (lastMessage && lastMessage.content === userMessage) {
-        console.log(`😴 Ignoring duplicate message: "${userMessage}"`);
-        return false;
-    }
-    
-    const lowEffortMessages = ['ok', 'lol', 'k', 'bye', 'goodbye', 'nice', 'cool', 'yeah', 'no', 'yes'];
-    if (lowEffortMessages.includes(userMessage.toLowerCase().trim())) {
-        const recentHistory = history.slice(-3);
-        const recentLowEffort = recentHistory.filter(m => 
-            lowEffortMessages.includes(m.content.toLowerCase().trim())
-        ).length;
-        
-        if (recentLowEffort >= 2) {
-            console.log(`😴 Ignoring low-effort message: "${userMessage}"`);
-            return false;
-        }
-    }
-    
-    return true;
 }
 
 let memory = loadMemory();
@@ -267,8 +240,6 @@ client.on('messageCreate', async (message) => {
     if (!userMessage) {
         userMessage = "Hello!";
     }
-    
-    if (!shouldReplyTo(message, userMessage, memory)) return;
     
     try {
         await message.channel.sendTyping();
