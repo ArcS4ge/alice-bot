@@ -83,6 +83,31 @@ const CASUAL_OPENERS = [
     "bro"
 ];
 
+function shouldReplyTo(message, userMessage, memory) {
+    const history = memory[message.author.id] || [];
+    const lastMessage = history.length > 0 ? history[history.length - 1] : null;
+    
+    if (lastMessage && lastMessage.content === userMessage) {
+        console.log(`😴 Ignoring duplicate: "${userMessage}"`);
+        return false;
+    }
+    
+    const lowEffort = ['ok', 'lol', 'k', 'bye', 'goodbye', 'nice', 'cool', 'yeah', 'no', 'yes', 'lmao', 'fr', 'bet'];
+    if (lowEffort.includes(userMessage.toLowerCase().trim())) {
+        const recent = history.slice(-3);
+        const recentLowEffort = recent.filter(m => 
+            lowEffort.includes(m.content.toLowerCase().trim())
+        ).length;
+        
+        if (recentLowEffort >= 2) {
+            console.log(`😴 Ignoring low-effort: "${userMessage}"`);
+            return false;
+        }
+    }
+    
+    return true;
+}
+
 async function getGroqResponse(prompt) {
     try {
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -242,6 +267,8 @@ client.on('messageCreate', async (message) => {
     if (!userMessage) {
         userMessage = "Hello!";
     }
+    
+    if (!shouldReplyTo(message, userMessage, memory)) return;
     
     try {
         await message.channel.sendTyping();
