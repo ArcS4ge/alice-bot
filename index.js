@@ -14,6 +14,8 @@ const TOKEN = process.env.TOKEN;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
+console.log('🔑 Token loaded:', TOKEN ? 'Token exists (length: ' + TOKEN.length + ')' : '❌ TOKEN IS MISSING!');
+
 const MEMORY_FILE = path.join(__dirname, 'memory.json');
 
 function loadMemory() {
@@ -264,4 +266,13 @@ const server = http.createServer((req, res) => {
 });
 server.listen(process.env.PORT || 10000);
 
-client.login(TOKEN);
+console.log('🚀 Attempting to login to Discord...');
+
+client.login(TOKEN)
+    .then(() => {
+        console.log('✅ Login successful!');
+    })
+    .catch(error => {
+        console.error('❌ Login failed:', error.message);
+        console.error(error.stack);
+    });
