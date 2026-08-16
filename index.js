@@ -2,6 +2,27 @@ const { Client, GatewayIntentBits } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 
+// Conversation fatigue system (only for bot-to-bot replies)
+const botReplyTracker = new Map();
+
+function getBotFatigue(userId) {
+    const data = botReplyTracker.get(userId);
+    if (!data) return 0;
+    // Fatigue resets after 5 minutes of inactivity
+    if (Date.now() - data.lastActivity > 300000) {
+        botReplyTracker.delete(userId);
+        return 0;
+    }
+    return data.count;
+}
+
+function increaseBotFatigue(userId) {
+    const data = botReplyTracker.get(userId) || { count: 0, lastActivity: Date.now() };
+    data.count += 1;
+    data.lastActivity = Date.now();
+    botReplyTracker.set(userId, data);
+}
+
 const client = new Client({ 
     intents: [
         GatewayIntentBits.Guilds,
@@ -180,7 +201,18 @@ client.on('ready', () => {
 });
 
 client.on('messageCreate', async (message) => {
-    if (message.author.bot) return;
+    // Don't reply to itself
+    if (message.author.id === client.user.id) return;
+
+    // If the message is from another bot, apply fatigue
+    if (message.author.bot) {
+        const fatigue = getBotFatigue(message.author.id);
+        if (fatigue >= 4) {
+            console.log(`🌿 Natural fatigue: ${message.author.username} stopping after ${fatigue} exchanges.`);
+            return;
+        }
+        increaseBotFatigue(message.author.id);
+    }
 
     const startsWithBang = message.content.startsWith('!');
     const isMentioned = message.mentions.has(client.user);
