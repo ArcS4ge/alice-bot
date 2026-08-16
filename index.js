@@ -247,6 +247,7 @@ client.on('messageCreate', async (message) => {
                 `!ping — ping pong, obviously\n` +
                 `!time — what time is it\n` +
                 `!roast @user — roast someone\n` +
+                `!talk @user — start a conversation with someone\n` +
                 `!quote — random quote\n` +
                 `!memory — what i remember about you`
             );
@@ -263,6 +264,19 @@ client.on('messageCreate', async (message) => {
                 "you bring everyone so much joy... when you leave."
             ];
             return message.reply(`@${target.username}, ${roasts[Math.floor(Math.random() * roasts.length)]}`);
+        }
+
+        if (command === 'talk') {
+            const target = message.mentions.users.first();
+            if (!target) return message.reply("you gotta mention someone to talk to, dummy.");
+            if (target.id === client.user.id) return message.reply("i'm not gonna talk to myself, that's weird.");
+            const starters = [
+                `hey <@${target.id}>, what's up?`,
+                `yo <@${target.id}>, you busy?`,
+                `<@${target.id}>, i'm bored. entertain me.`,
+                `<@${target.id}>, do you exist or are you just a figment of my imagination?`
+            ];
+            return message.reply(starters[Math.floor(Math.random() * starters.length)]);
         }
 
         if (command === 'quote') {
