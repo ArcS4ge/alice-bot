@@ -298,7 +298,7 @@ client.on('messageCreate', async (message) => {
                 `<@${target.id}>, i'm bored. entertain me.`,
                 `<@${target.id}>, do you exist or are you just a figment of my imagination?`
             ];
-            return message.reply(starters[Math.floor(Math.random() * starters.length)]);
+            return message.channel.send(starters[Math.floor(Math.random() * starters.length)]);
         }
 
         if (command === 'quote') {
