@@ -149,7 +149,7 @@ async function getGroqResponse(prompt) {
                 'Authorization': `Bearer ${GROQ_API_KEY}`
             },
             body: JSON.stringify({
-                model: 'llama3-70b-8192',
+                model: 'groq/compound',
                 messages: [
                     { role: 'system', content: prompt },
                     { role: 'user', content: prompt }
